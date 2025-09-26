@@ -62,7 +62,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'release' && contains(fromJson('["published","prereleased","released"]'), github.event.action)
     needs: build
     runs-on: ${{ matrix.os }}
     permissions:
