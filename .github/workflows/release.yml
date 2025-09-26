@@ -20,10 +20,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
+        include:
+          - os: ubuntu-latest
+            artifact-name: simpleffmpeg-linux-x86_64
+            bin-path: target/release/simpleffmpeg
+          - os: macos-latest
+            artifact-name: simpleffmpeg-macos-aarch64
+            bin-path: target/release/simpleffmpeg
+          - os: windows-latest
+            artifact-name: simpleffmpeg-windows-x86_64
+            bin-path: target/release/simpleffmpeg.exe
     steps:
       - uses: actions/checkout@v4
 
@@ -45,6 +51,16 @@ jobs:
       - name: Build all targets
         run: cargo build --all-targets --verbose
 
+      - name: Build release binary
+        run: cargo build --release --verbose
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.bin-path }}
+          if-no-files-found: error
+
   release:
     if: github.event_name == 'release' && github.event.action == 'published'
     needs: build
@@ -57,14 +73,21 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            archive-ext: tar.gz
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            archive-ext: zip
           - os: macos-13
             target: x86_64-apple-darwin
+            archive-ext: tar.gz
           - os: macos-latest
             target: aarch64-apple-darwin
+            archive-ext: tar.gz
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -77,5 +100,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           bin: simpleffmpeg
           target: ${{ matrix.target }}
-          archive: simpleffmpeg-${{ matrix.target }}
+          archive: simpleffmpeg-${{ github.event.release.tag_name }}-${{ matrix.target }}.${{ matrix.archive-ext }}
           manifest-path: Cargo.toml
+          profile: release
