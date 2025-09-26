@@ -1,0 +1,11 @@
+[package]
+name = "simpleffmpeg"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = { version = "0.28", features = ["wgpu"] }
+egui = "0.28"
+native-dialog = "0.9.0"
+portable-pty = "0.8"
+rfd = "0.15.4"
